@@ -28,6 +28,8 @@ void priqueue_init(priqueue_t *q, int(*comparer)(const void *, const void *))
 {
   q->cmp = comparer;
   q->size = 0;
+  q->head = NULL;
+  q->tail = NULL;
 }
 
 
