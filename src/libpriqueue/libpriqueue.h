@@ -11,14 +11,15 @@ typedef struct _list_node
   void* val;
 } list_node;
 
+void node_init(list_node *n, void* v);
 
 /**
   Priqueue Data Structure
 */
 typedef struct _priqueue_t
 {
-  struct list_node* front;
-  struct list_node* back;
+  list_node* front;
+  list_node* back;
   unsigned int size;
   int (*cmp)(const void*, const void*);
 } priqueue_t;

@@ -7,6 +7,13 @@
 #include "libpriqueue.h"
 
 
+// void node_init(list_node *n, void* v) {
+//   n->next = NULL;
+//   n->prev = NULL;
+//   n->val = v;
+// }
+
+
 /**
   Initializes the priqueue_t data structure.
   
@@ -33,6 +40,13 @@ void priqueue_init(priqueue_t *q, int(*comparer)(const void *, const void *))
  */
 int priqueue_offer(priqueue_t *q, void *ptr)
 {
+  if(q->size == 0) {
+    q->front = malloc(sizeof(list_node));
+    q->front->next = NULL;
+    q->front->prev = NULL;
+    q->front->val = ptr;
+    q->back = q->front;
+  }
   return -1;
 }
 
@@ -130,8 +144,5 @@ int priqueue_size(priqueue_t *q)
  */
 void priqueue_destroy(priqueue_t *q)
 {
-  void* x;
-  for(x = q->front; x < q->back; x++) {
-    free(x);
-  }
+  
 }
