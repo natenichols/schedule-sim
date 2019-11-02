@@ -48,19 +48,20 @@ int priqueue_offer(priqueue_t *q, void *ptr)
   int index = 0;
   list_node* iter = q->head;
 
-  if(iter == NULL) {
-    q->head = entry;
-  }
-  else {
-    while(iter->next != NULL && q->cmp(iter->val, ptr) < 0) {
+  if(iter != NULL) {
+    while(iter->next != NULL && q->cmp(iter->val, ptr) > 0) {
       iter = iter->next;
       index++;
     }
-
+    if(iter->prev != NULL) iter->prev->next = entry;
     entry->next = iter->next;
     entry->prev = iter;
-    iter->next = entry;
-  } 
+    if(iter->next != NULL) iter->next = entry;
+  }
+
+  if(index == 0) {
+    q->head = entry;
+  }
 
   if(index == q->size) {
     q->tail = entry;
@@ -140,7 +141,7 @@ int priqueue_remove(priqueue_t *q, void *ptr)
   while(temp != NULL) {
     if(temp->val == ptr) {
       list_node* nodeToDelete = temp;
-      temp->prev = temp->next;
+      temp->prev->next = temp->next;
       temp = temp->next;
       free(nodeToDelete);
       count++;
@@ -168,11 +169,11 @@ void *priqueue_remove_at(priqueue_t *q, int index)
   if(index >= q->size) return NULL;
 
   list_node* temp = q->head;
-  while(index > 0) {
+  while(index > 1) {
     temp = temp->next;
     index--;
   }
-  temp->prev = temp->next;
+  if(temp->prev != NULL) temp->prev->next = temp->next;
   void* element = temp->val;
   free(temp);
   q->size--;
