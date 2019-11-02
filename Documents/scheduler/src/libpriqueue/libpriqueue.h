@@ -6,8 +6,13 @@
 
 typedef struct _list_node
 {
+<<<<<<< HEAD
   struct list_node* next;
   struct list_node* prev;
+=======
+  struct heap_node* left;
+  struct heap_node* right;
+>>>>>>> 48ba4a687956f86f459c95530c88099ae054c0df
   void* val;
 } list_node;
 
