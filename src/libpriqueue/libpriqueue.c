@@ -75,7 +75,6 @@ int priqueue_offer(priqueue_t *q, void *ptr)
   }
 
   q->size++;
-  print_queue(q);
   return index;
 }
 
@@ -130,13 +129,12 @@ void *priqueue_poll(priqueue_t *q)
  */
 void *priqueue_at(priqueue_t *q, int index)
 {
-  if(index >= q->size) return NULL;
-   list_node* node = q->head;
-  while (index > 0 && node != NULL) {
-    node = node->next;
-    index--;
-  }
-	return node;
+  if(index >= q->size || index < 0) return NULL;
+
+  list_node* node;
+  for(node = q->head; index > 0; index--, node = node->next);
+
+	return node->val;
 }
 
 
