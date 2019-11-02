@@ -68,3 +68,5 @@ dkms.conf
 /doxygen_docs
 /doxygen.tag
 /build*
+
+**/doc/html
