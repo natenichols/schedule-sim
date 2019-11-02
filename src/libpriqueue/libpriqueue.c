@@ -40,23 +40,32 @@ void priqueue_init(priqueue_t *q, int(*comparer)(const void *, const void *))
  */
 int priqueue_offer(priqueue_t *q, void *ptr)
 {
+  list_node* entry = malloc(sizeof(list_node));
+  node_init(entry, ptr);
+
   int index = 0;
+  list_node* iter = q->head;
 
-  if(q->size == 0) {
-    q->head = malloc(sizeof(list_node));
-    q->tail = q->head;
-    node_init(q->head, ptr);
-    return 0;
+  if(iter == NULL) {
+    q->head = entry;
+  }
+  else {
+    while(iter->next != NULL && q->cmp(iter->val, ptr) < 0) {
+      iter = iter->next;
+      index++;
+    }
+
+    entry->next = iter->next;
+    entry->prev = iter;
+    iter->next = entry;
+  } 
+
+  if(index == q->size) {
+    q->tail = entry;
   }
   
-  list_node* iter = q->tail;
-  while(q->cmp(ptr, iter->val) && iter->prev != NULL) {
-    iter = iter->prev;
-  }
-  
-  
-
-  return -1;
+  q->size++;
+  return index;
 }
 
 
