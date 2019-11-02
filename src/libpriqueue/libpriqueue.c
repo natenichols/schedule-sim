@@ -48,7 +48,10 @@ int priqueue_offer(priqueue_t *q, void *ptr)
   int index = 0;
   list_node* iter = q->head;
 
-  if(iter != NULL) {
+  if(iter == NULL) {
+    q->head = entry;
+  }
+  else {
     while(iter->next != NULL && q->cmp(iter->val, ptr) > 0) {
       iter = iter->next;
       index++;
@@ -68,6 +71,7 @@ int priqueue_offer(priqueue_t *q, void *ptr)
   }
   
   q->size++;
+  print_queue(q);
   return index;
 }
 
@@ -86,6 +90,13 @@ void *priqueue_peek(priqueue_t *q)
 	return q->head;
 }
 
+void print_queue(priqueue_t *q) {
+  list_node* t;
+  for(t = q->head; t != NULL; t = t->next) {
+    printf("%d ", *(int *)(t->val));
+  }
+  printf("\n");
+}
 
 /**
   Retrieves and removes the head of this queue, or NULL if this queue
