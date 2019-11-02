@@ -70,3 +70,7 @@ dkms.conf
 /build*
 
 **/doc/html
+
+# Executeables
+queuetest
+simulator
