@@ -4,13 +4,12 @@
 #ifndef LIBPRIQUEUE_H_
 #define LIBPRIQUEUE_H_
 
-typedef struct _heap_node
+typedef struct _list_node
 {
-  heap_node* left;
-  heap_node* right;
+  struct list_node* next;
+  struct list_node* prev;
   void* val;
-} heap_node;
-
+} list_node;
 
 
 /**
@@ -18,11 +17,10 @@ typedef struct _heap_node
 */
 typedef struct _priqueue_t
 {
-  void* front;
-  void* back;
+  struct list_node* front;
+  struct list_node* back;
   unsigned int size;
   int (*cmp)(const void*, const void*);
-  int item_size;
 } priqueue_t;
 
 
