@@ -46,10 +46,15 @@ int priqueue_offer(priqueue_t *q, void *ptr)
     q->head = malloc(sizeof(list_node));
     q->tail = q->head;
     node_init(q->head, ptr);
+    return 0;
   }
-  else {
-    list_node* iter = q->tail;
+  
+  list_node* iter = q->tail;
+  while(q->cmp(ptr, iter->val) && iter->prev != NULL) {
+    iter = iter->prev;
   }
+  
+  
 
   return -1;
 }
@@ -66,7 +71,7 @@ int priqueue_offer(priqueue_t *q, void *ptr)
 void *priqueue_peek(priqueue_t *q)
 {
   if(q->size == 0) return NULL;
-	return q->front;
+	return q->head;
 }
 
 
