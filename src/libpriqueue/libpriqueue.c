@@ -104,7 +104,7 @@ void *priqueue_poll(priqueue_t *q)
 void *priqueue_at(priqueue_t *q, int index)
 {
   if(index >= q->size) return NULL;
-   list_node* node = q->front;
+   list_node* node = q->head;
   while (index > 0 && node != NULL) {
     node = node->next;
     index--;
@@ -162,12 +162,11 @@ int priqueue_size(priqueue_t *q)
  */
 void priqueue_destroy(priqueue_t *q)
 {
-<<<<<<< Updated upstream
-  
-=======
   list_node* x;
-  for(x = q->front; x < q->back; x++) {
+  list_node* temp;
+  while(x != NULL) {
+    temp = x->next;
     free(x);
+    x = temp;
   }
->>>>>>> Stashed changes
 }
