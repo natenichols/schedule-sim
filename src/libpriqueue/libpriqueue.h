@@ -18,8 +18,8 @@ void node_init(list_node *n, void* v);
 */
 typedef struct _priqueue_t
 {
-  list_node* front;
-  list_node* back;
+  list_node* head;
+  list_node* tail;
   unsigned int size;
   int (*cmp)(const void*, const void*);
 } priqueue_t;

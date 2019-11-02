@@ -7,11 +7,11 @@
 #include "libpriqueue.h"
 
 
-// void node_init(list_node *n, void* v) {
-//   n->next = NULL;
-//   n->prev = NULL;
-//   n->val = v;
-// }
+void node_init(list_node *n, void* v) {
+  n->next = NULL;
+  n->prev = NULL;
+  n->val = v;
+}
 
 
 /**
@@ -40,13 +40,17 @@ void priqueue_init(priqueue_t *q, int(*comparer)(const void *, const void *))
  */
 int priqueue_offer(priqueue_t *q, void *ptr)
 {
+  int index = 0;
+
   if(q->size == 0) {
-    q->front = malloc(sizeof(list_node));
-    q->front->next = NULL;
-    q->front->prev = NULL;
-    q->front->val = ptr;
-    q->back = q->front;
+    q->head = malloc(sizeof(list_node));
+    q->tail = q->head;
+    node_init(q->head, ptr);
   }
+  else {
+    list_node* iter = q->tail;
+  }
+
   return -1;
 }
 
