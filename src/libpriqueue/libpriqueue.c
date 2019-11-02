@@ -109,9 +109,9 @@ void print_queue(priqueue_t *q) {
 void *priqueue_poll(priqueue_t *q)
 {
   if(q->size == 0) return NULL;
-  list_node *head = priqueue_at(q, 0);
+  void *data = q->head->val;
   priqueue_remove_at(q, 0);
-  return head;
+  return data;
 }
 
 
