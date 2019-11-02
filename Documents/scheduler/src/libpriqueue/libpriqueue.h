@@ -6,8 +6,8 @@
 
 typedef struct _heap_node
 {
-  heap_node* left;
-  heap_node* right;
+  struct heap_node* left;
+  struct heap_node* right;
   void* val;
 } heap_node;
 
