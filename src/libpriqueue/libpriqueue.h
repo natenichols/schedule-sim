@@ -6,8 +6,8 @@
 
 typedef struct _list_node
 {
-  struct list_node* next;
-  struct list_node* prev;
+  struct _list_node *next;
+  struct _list_node *prev;
   void* val;
 } list_node;
 
@@ -18,8 +18,13 @@ void node_init(list_node *n, void* v);
 */
 typedef struct _priqueue_t
 {
+<<<<<<< Updated upstream
   list_node* head;
   list_node* tail;
+=======
+  list_node *front;
+  list_node *back;
+>>>>>>> Stashed changes
   unsigned int size;
   int (*cmp)(const void*, const void*);
 } priqueue_t;
