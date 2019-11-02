@@ -140,6 +140,7 @@ int priqueue_remove(priqueue_t *q, void *ptr)
       temp = temp->next;
     }
   }
+  q->size -= count;
 	return count;
 }
 
@@ -155,7 +156,18 @@ int priqueue_remove(priqueue_t *q, void *ptr)
  */
 void *priqueue_remove_at(priqueue_t *q, int index)
 {
-	return 0;
+  if(index >= q->size) return NULL;
+
+  list_node* temp = q->head;
+  while(index > 0) {
+    temp = temp->next;
+    index--;
+  }
+  temp->prev = temp->next;
+  void* element = temp->val;
+  free(temp);
+  q->size--;
+	return element;
 }
 
 
