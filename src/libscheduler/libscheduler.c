@@ -24,6 +24,10 @@ typedef struct _scheduler_t
   int cores;
   scheme_t scheme;
   priqueue_t queue;
+  int total_jobs_complete;
+  float total_wait_time;
+  float total_turnaround_time;
+  float total_response_time;
 } scheduler_t;
 
 scheduler_t _scheduler;
@@ -70,6 +74,7 @@ void scheduler_start_up(int cores, scheme_t scheme)
  */
 int scheduler_new_job(int job_number, int time, int running_time, int priority)
 {
+
 	return -1;
 }
 
@@ -122,7 +127,7 @@ int scheduler_quantum_expired(int core_id, int time)
  */
 float scheduler_average_waiting_time()
 {
-	return 0.0;
+	return (_scheduler.total_jobs_complete != 0) ? _scheduler.total_wait_time / _scheduler.total_jobs_complete : 0;
 }
 
 
@@ -135,7 +140,7 @@ float scheduler_average_waiting_time()
  */
 float scheduler_average_turnaround_time()
 {
-	return 0.0;
+	return (_scheduler.total_jobs_complete != 0) ? _scheduler.total_turnaround_time / _scheduler.total_jobs_complete: 0;
 }
 
 
@@ -148,7 +153,7 @@ float scheduler_average_turnaround_time()
  */
 float scheduler_average_response_time()
 {
-	return 0.0;
+	return (_scheduler.total_jobs_complete != 0) ? _scheduler.total_response_time / _scheduler.total_jobs_complete : 0;
 }
 
 
@@ -160,7 +165,7 @@ float scheduler_average_response_time()
 */
 void scheduler_clean_up()
 {
-   priqueue_destroy(&_scheduler.queue);
+  priqueue_destroy(&_scheduler.queue);
 }
 
 
