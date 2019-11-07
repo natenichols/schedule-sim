@@ -19,6 +19,11 @@ typedef struct _job_t
   int job_id;
 } job_t;
 
+typedef struct _core_t
+{
+  int core_id;
+} core_t;
+
 typedef struct _scheduler_t
 {
   int cores;
@@ -51,6 +56,10 @@ void scheduler_start_up(int cores, scheme_t scheme)
   _scheduler.scheme = scheme;
   priqueue_init(&_scheduler.job_queue, NULL);
   priqueue_init(&_scheduler.core_queue, NULL);
+  for (int i = cores - 1; i >= 0; i--) {
+    core_t tempCore = {i};
+    priqueue_offer(&_scheduler.core_queue, &tempCore);
+  }
 }
 
 
@@ -185,5 +194,5 @@ void scheduler_clean_up()
  */
 void scheduler_show_queue()
 {
-  print_queue(&_scheduler.queue);
+  print_queue(&_scheduler.job_queue);
 }
