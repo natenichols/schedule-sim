@@ -57,8 +57,9 @@ void scheduler_start_up(int cores, scheme_t scheme)
   priqueue_init(&_scheduler.job_queue, NULL);
   priqueue_init(&_scheduler.core_queue, NULL);
   for (int i = cores - 1; i >= 0; i--) {
-    core_t tempCore = {i};
-    priqueue_offer(&_scheduler.core_queue, &tempCore);
+    core_t* tempCore = malloc(sizeof(core_t));
+    tempCore->core_id = i;
+    priqueue_offer(&_scheduler.core_queue, tempCore);
   }
 }
 
@@ -176,6 +177,9 @@ float scheduler_average_response_time()
 */
 void scheduler_clean_up()
 {
+  while(_scheduler.job_queue.head != _scheduler.job_queue.tail) {
+    //request and destroy
+  }
   priqueue_destroy(&_scheduler.job_queue);
   priqueue_destroy(&_scheduler.core_queue);
 }
@@ -194,12 +198,8 @@ void scheduler_clean_up()
  */
 void scheduler_show_queue()
 {
-<<<<<<< Updated upstream
-  print_queue(&_scheduler.job_queue);
-=======
   printf("Jobs:\n");
   print_queue(&_scheduler.job_queue);
   printf("Cores:\n");
   print_queue(&_scheduler.core_queue);
->>>>>>> Stashed changes
 }
