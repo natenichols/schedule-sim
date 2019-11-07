@@ -126,8 +126,9 @@ int scheduler_job_finished(int core_id, int job_number, int time)
   if(new_job == NULL) {
     return -1;
   }
-  core_t nextCore = priqueue_poll(&_scheduler.core_queue);
-  return (nextCore == core_id) ? new_job->job_id : -1;
+  // TODO: MODIFY TIME
+  core_t* nextCore = priqueue_poll(&_scheduler.core_queue);
+  return (nextCore->core_id == core_id) ? new_job->job_id : -1;
 }
 
 
