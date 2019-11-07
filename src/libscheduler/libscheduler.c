@@ -194,5 +194,12 @@ void scheduler_clean_up()
  */
 void scheduler_show_queue()
 {
+<<<<<<< Updated upstream
   print_queue(&_scheduler.job_queue);
+=======
+  printf("Jobs:\n");
+  print_queue(&_scheduler.job_queue);
+  printf("Cores:\n");
+  print_queue(&_scheduler.core_queue);
+>>>>>>> Stashed changes
 }
