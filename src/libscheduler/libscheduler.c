@@ -16,16 +16,17 @@
 */
 typedef struct _job_t
 {
-
+  int job_id;
 } job_t;
 
 typedef struct _scheduler_t
 {
   int cores;
   scheme_t scheme;
+  priqueue_t queue;
 } scheduler_t;
 
-scheduler_t _scheduler = {0};
+scheduler_t _scheduler;
 
 /**
   Initalizes the scheduler.
@@ -43,6 +44,7 @@ void scheduler_start_up(int cores, scheme_t scheme)
 {
   _scheduler.cores = cores;
   _scheduler.scheme = scheme;
+  priqueue_init(&_scheduler.queue, NULL);
 }
 
 
@@ -158,7 +160,7 @@ float scheduler_average_response_time()
 */
 void scheduler_clean_up()
 {
-
+   priqueue_destroy(&_scheduler.queue);
 }
 
 
@@ -175,5 +177,5 @@ void scheduler_clean_up()
  */
 void scheduler_show_queue()
 {
-
+  print_queue(&_scheduler.queue);
 }
