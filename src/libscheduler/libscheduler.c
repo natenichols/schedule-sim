@@ -19,6 +19,13 @@ typedef struct _job_t
 
 } job_t;
 
+typedef struct _scheduler_t
+{
+  int cores;
+  scheme_t scheme;
+} scheduler_t;
+
+scheduler_t _scheduler = {0};
 
 /**
   Initalizes the scheduler.
@@ -34,7 +41,8 @@ typedef struct _job_t
 */
 void scheduler_start_up(int cores, scheme_t scheme)
 {
-
+  _scheduler.cores = cores;
+  _scheduler.scheme = scheme;
 }
 
 
