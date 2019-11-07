@@ -116,7 +116,18 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
  */
 int scheduler_job_finished(int core_id, int job_number, int time)
 {
-	return -1;
+  priqueue_remove(&_scheduler.job_queue, &job_number);
+
+  core_t* tempCore = malloc(sizeof(core_t));
+  tempCore->core_id = core_id;
+  priqueue_offer(&_scheduler.core_queue, &tempCore);
+
+  job_t* new_job = priqueue_poll(&_scheduler.job_queue);
+  if(new_job == NULL) {
+    return -1;
+  }
+  core_t nextCore = priqueue_poll(&_scheduler.core_queue);
+  return (nextCore == core_id) ? new_job->job_id : -1;
 }
 
 
