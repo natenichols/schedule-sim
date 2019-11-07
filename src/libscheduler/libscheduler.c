@@ -17,6 +17,7 @@
 typedef struct _job_t
 {
   int job_id;
+  int job_priority;
 } job_t;
 
 typedef struct _core_t
@@ -54,6 +55,10 @@ void scheduler_start_up(int cores, scheme_t scheme)
 {
   _scheduler.cores = cores;
   _scheduler.scheme = scheme;
+  _scheduler.total_response_time = 0;
+  _scheduler.total_turnaround_time = 0;
+  _scheduler.total_wait_time = 0;
+  _scheduler.total_jobs_complete = 0;
   priqueue_init(&_scheduler.job_queue, NULL);
   priqueue_init(&_scheduler.core_queue, NULL);
   for (int i = cores - 1; i >= 0; i--) {
@@ -86,7 +91,11 @@ void scheduler_start_up(int cores, scheme_t scheme)
  */
 int scheduler_new_job(int job_number, int time, int running_time, int priority)
 {
-
+  job_t* j = malloc(sizeof(job_t));
+  j->job_id = job_number;
+  j->job_priority = priority;
+  _scheduler.total_response_time += time;
+  priqueue_offer(&_scheduler.job_queue, j);
 	return -1;
 }
 
@@ -178,7 +187,10 @@ float scheduler_average_response_time()
 void scheduler_clean_up()
 {
   while(_scheduler.job_queue.head != _scheduler.job_queue.tail) {
-    //request and destroy
+    free(priqueue_poll(&_scheduler.job_queue));
+  }
+  while(_scheduler.core_queue.head != _scheduler.core_queue.tail) {
+    free(priqueue_poll(&_scheduler.core_queue));
   }
   priqueue_destroy(&_scheduler.job_queue);
   priqueue_destroy(&_scheduler.core_queue);
