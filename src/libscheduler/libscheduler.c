@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <math.h>
 #include "libscheduler.h"
 #include "../libpriqueue/libpriqueue.h"
 
@@ -126,7 +126,7 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
   core_job_t* newActive;
   do {
     newActive = scheduler_update(time);
-    if (newActive->job->job_id == job_number) newCore = newActive->core->core_id;
+    if (newActive != NULL && newActive->job->job_id == job_number) newCore = newActive->core->core_id;
   } while(newActive != NULL);
 
 	return newCore;
@@ -184,7 +184,7 @@ int scheduler_job_finished(int core_id, int job_number, int time)
   core_job_t* newActive;
   do {
     newActive = scheduler_update(time);
-    if (newActive->core->core_id == core_id) newJob = newActive->job->job_id;
+    if (newActive != NULL && newActive->core->core_id == core_id) newJob = newActive->job->job_id;
   } while(newActive != NULL);
 
   return newJob;
@@ -290,12 +290,45 @@ void scheduler_clean_up()
   This function is not required and will not be graded. You may leave it
   blank if you do not find it useful.
  */
+char* getJobID(const void * job);
+char* getCoreID(const void * core);
+char* getActiveID(const void * active) ;
 void scheduler_show_queue()
 {
   printf("Jobs:\n");
-  print_queue(&_scheduler.job_queue);
+  print_queue(&_scheduler.job_queue, &getJobID);
   printf("Cores:\n");
-  print_queue(&_scheduler.core_queue);
-  printf("Active Jobs:\n");
-  print_queue(&_scheduler.active_queue);
+  print_queue(&_scheduler.core_queue, &getJobID);
+  printf("Active Core_Jobs:\n");
+  print_queue(&_scheduler.active_queue, &getActiveID);
+}
+char* getJobID(const void * job) {
+  if (job != NULL) {
+    int num = ((job_t*)job)->job_id;
+    char* str = malloc(sizeof(char)*((int)log10(num+2)));
+    sprintf(str, "%d", num);
+    return str;
+  }
+  return "-1";
+}
+char* getCoreID(const void * core) {
+  if (core != NULL) {
+    int num = ((core_t*)core)->core_id;
+    char* str = malloc(sizeof(char)*((int)log10(num+2)));
+    sprintf(str, "%d", num);
+    return str;
+  }
+  return "-1";
+}
+char* getActiveID(const void * active) {
+  if (active != NULL) {
+    int core_id = ((core_job_t*)active)->core->core_id;
+    int job_id = ((core_job_t*)active)->job->job_id;
+    char* str = malloc(sizeof(char)*((int)log10(core_id+2) + (int)log10(job_id+2) + 4));
+    sprintf(str, "(%d, %d)", core_id, job_id);
+    return str;
+  }
+  return "(-1, -1)";
+
+  return (active != NULL) ? getCoreID(((core_job_t*) active)->core) : "-1";
 }

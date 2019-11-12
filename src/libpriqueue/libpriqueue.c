@@ -93,10 +93,10 @@ void *priqueue_peek(priqueue_t *q)
 	return q->head;
 }
 
-void print_queue(priqueue_t *q) {
+void print_queue(priqueue_t *q, char*(*access)(const void *)) {
   list_node* t;
   for(t = q->head; t != NULL; t = t->next) {
-    printf("%d ", *(int *)(t->val));
+    printf("%s ", access(t->val));
   }
   printf("\n");
 }

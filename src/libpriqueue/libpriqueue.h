@@ -26,7 +26,7 @@ typedef struct _priqueue_t
 
 
 void   priqueue_init     (priqueue_t *q, int(*comparer)(const void *, const void *));
-void   print_queue       (priqueue_t *q);
+void   print_queue       (priqueue_t *q, char*(*access)(const void *));
 int    priqueue_offer    (priqueue_t *q, void *ptr);
 void * priqueue_peek     (priqueue_t *q);
 void * priqueue_poll     (priqueue_t *q);
