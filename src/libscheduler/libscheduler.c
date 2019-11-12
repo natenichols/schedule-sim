@@ -8,6 +8,8 @@
 #include "libscheduler.h"
 #include "../libpriqueue/libpriqueue.h"
 
+// Helper Functions
+core_job_t* scheduler_update(int time);
 
 /**
   Stores information making up a job to be scheduled including any statistics.
@@ -18,6 +20,7 @@ typedef struct _job_t
 {
   int job_id;
   int job_priority;
+  float burst_time;
 } job_t;
 
 typedef struct _core_t
@@ -25,12 +28,23 @@ typedef struct _core_t
   int core_id;
 } core_t;
 
+typedef struct _core_job_t
+{
+  core_t* core;
+  job_t*  job;
+  int     time;
+} core_job_t;
+
 typedef struct _scheduler_t
 {
   int cores;
   scheme_t scheme;
+
   priqueue_t job_queue;
   priqueue_t core_queue;
+
+  priqueue_t active_queue;
+
   int total_jobs_complete;
   float total_wait_time;
   float total_turnaround_time;
@@ -55,12 +69,16 @@ void scheduler_start_up(int cores, scheme_t scheme)
 {
   _scheduler.cores = cores;
   _scheduler.scheme = scheme;
+
   _scheduler.total_response_time = 0;
   _scheduler.total_turnaround_time = 0;
   _scheduler.total_wait_time = 0;
   _scheduler.total_jobs_complete = 0;
+
   priqueue_init(&_scheduler.job_queue, NULL);
   priqueue_init(&_scheduler.core_queue, NULL);
+  priqueue_init(&_scheduler.active_queue, NULL);
+
   for (int i = cores - 1; i >= 0; i--) {
     core_t* tempCore = malloc(sizeof(core_t));
     tempCore->core_id = i;
@@ -94,9 +112,32 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
   job_t* j = malloc(sizeof(job_t));
   j->job_id = job_number;
   j->job_priority = priority;
-  _scheduler.total_response_time += time;
+  j->burst_time = running_time;
+
   priqueue_offer(&_scheduler.job_queue, j);
-	return -1;
+
+  int newCore = -1;
+  core_job_t* newActive;
+  do {
+    core_job_t* newActive = scheduler_update(time);
+    if (newActive->job->job_id == job_number) newCore = newActive->core->core_id;
+  } while(newActive != NULL);
+
+	return newCore
+}
+
+core_job_t* scheduler_update(int time)
+{
+  if (priqueue_size(&_scheduler.job_queue) <= 0 || priqueue_size(&_scheduler.core_queue) <= 0) return NULL;
+  
+  core_job_t* newActive = malloc(sizeof(core_job_t));
+  newActive->time = time;
+  newActive->job = priqueue_poll(&_scheduler.job_queue);
+  newActive->core = priqueue_poll(&_scheduler.core_queue);
+
+  priqueue_offer(&_scheduler.active_queue, newActive);
+
+	return newActive;
 }
 
 
@@ -116,19 +157,31 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
  */
 int scheduler_job_finished(int core_id, int job_number, int time)
 {
-  priqueue_remove(&_scheduler.job_queue, &job_number);
-
-  core_t* tempCore = malloc(sizeof(core_t));
-  tempCore->core_id = core_id;
-  priqueue_offer(&_scheduler.core_queue, &tempCore);
-
-  job_t* new_job = priqueue_poll(&_scheduler.job_queue);
-  if(new_job == NULL) {
-    return -1;
+  // TODO: MAKE THIS MORE EFFICIENT
+  int index = 0;
+  int size = priqueue_size(&_scheduler.active_queue);
+  while (index < size && ((core_job_t*)priqueue_at(&_scheduler.active_queue, index))->core->core_id == core_id) {
+    index++;
   }
+  if (index >= size) return -1;
+
+  core_job_t* finished = priqueue_remove_at(&_scheduler.active_queue, index);
+  // It is assumed that this core will have the job with matching job_number
+
+  priqueue_offer(&_scheduler.core_queue, finished->core);
+
   // TODO: MODIFY TIME
-  core_t* nextCore = priqueue_poll(&_scheduler.core_queue);
-  return (nextCore->core_id == core_id) ? new_job->job_id : -1;
+
+  free(finished);
+
+  int newJob = -1;
+  core_job_t* newActive;
+  do {
+    core_job_t* newActive = scheduler_update(time);
+    if (newActive->core->core_id == core_id) newJob = newActive->job->job_id;
+  } while(newActive != NULL);
+
+  return newJob;
 }
 
 
@@ -147,7 +200,14 @@ int scheduler_job_finished(int core_id, int job_number, int time)
  */
 int scheduler_quantum_expired(int core_id, int time)
 {
-	return -1;
+  int index = 0;
+  int size = priqueue_size(&_scheduler.active_queue);
+  while (index < size && ((core_job_t*)priqueue_at(&_scheduler.active_queue, index))->core->core_id == core_id) {
+    index++;
+  }
+  if (index >= size) return -1;
+
+	return scheduler_job_finished(core_id, ((core_job_t*)priqueue_at(&_scheduler.active_queue, index))->job->job_id, time);
 }
 
 
@@ -198,14 +258,18 @@ float scheduler_average_response_time()
 */
 void scheduler_clean_up()
 {
-  while(_scheduler.job_queue.head != _scheduler.job_queue.tail) {
+  while(priqueue_size(&_scheduler.job_queue) != 0) {
     free(priqueue_poll(&_scheduler.job_queue));
   }
-  while(_scheduler.core_queue.head != _scheduler.core_queue.tail) {
+  while(priqueue_size(&_scheduler.core_queue) != 0) {
     free(priqueue_poll(&_scheduler.core_queue));
+  }  
+  while(priqueue_size(&_scheduler.active_queue) != 0) {
+    free(priqueue_poll(&_scheduler.active_queue));
   }
   priqueue_destroy(&_scheduler.job_queue);
   priqueue_destroy(&_scheduler.core_queue);
+  priqueue_destroy(&_scheduler.active_queue);
 }
 
 
@@ -226,4 +290,6 @@ void scheduler_show_queue()
   print_queue(&_scheduler.job_queue);
   printf("Cores:\n");
   print_queue(&_scheduler.core_queue);
+  printf("Active Jobs:\n");
+  print_queue(&_scheduler.active_queue);
 }
