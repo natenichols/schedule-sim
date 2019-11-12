@@ -8,8 +8,7 @@
 #include "libscheduler.h"
 #include "../libpriqueue/libpriqueue.h"
 
-// Helper Functions
-core_job_t* scheduler_update(int time);
+
 
 /**
   Stores information making up a job to be scheduled including any statistics.
@@ -53,6 +52,9 @@ typedef struct _scheduler_t
 
 scheduler_t _scheduler;
 
+// Helper Functions
+core_job_t* scheduler_update(int time);
+
 /**
   Initalizes the scheduler.
  
@@ -65,6 +67,10 @@ scheduler_t _scheduler;
   @param cores the number of cores that is available by the scheduler. These cores will be known as core(id=0), core(id=1), ..., core(id=cores-1).
   @param scheme  the scheduling scheme that should be used. This value will be one of the six enum values of scheme_t
 */
+int ret(const void* one, const void* two) {
+  return -1;
+}
+
 void scheduler_start_up(int cores, scheme_t scheme)
 {
   _scheduler.cores = cores;
@@ -75,9 +81,9 @@ void scheduler_start_up(int cores, scheme_t scheme)
   _scheduler.total_wait_time = 0;
   _scheduler.total_jobs_complete = 0;
 
-  priqueue_init(&_scheduler.job_queue, NULL);
-  priqueue_init(&_scheduler.core_queue, NULL);
-  priqueue_init(&_scheduler.active_queue, NULL);
+  priqueue_init(&_scheduler.job_queue, &ret);
+  priqueue_init(&_scheduler.core_queue, &ret);
+  priqueue_init(&_scheduler.active_queue, &ret);
 
   for (int i = cores - 1; i >= 0; i--) {
     core_t* tempCore = malloc(sizeof(core_t));
@@ -119,11 +125,11 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
   int newCore = -1;
   core_job_t* newActive;
   do {
-    core_job_t* newActive = scheduler_update(time);
+    newActive = scheduler_update(time);
     if (newActive->job->job_id == job_number) newCore = newActive->core->core_id;
   } while(newActive != NULL);
 
-	return newCore
+	return newCore;
 }
 
 core_job_t* scheduler_update(int time)
@@ -177,7 +183,7 @@ int scheduler_job_finished(int core_id, int job_number, int time)
   int newJob = -1;
   core_job_t* newActive;
   do {
-    core_job_t* newActive = scheduler_update(time);
+    newActive = scheduler_update(time);
     if (newActive->core->core_id == core_id) newJob = newActive->job->job_id;
   } while(newActive != NULL);
 
