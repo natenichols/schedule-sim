@@ -68,7 +68,11 @@ core_job_t* scheduler_update(int time);
   @param scheme  the scheduling scheme that should be used. This value will be one of the six enum values of scheme_t
 */
 int fcfs(const void* one, const void* two) {
-  return 1;
+  int dif = (((job_t*)one)->arrival_time - ((job_t*)two)->arrival_time);
+  if (dif == 0) {
+    return (((job_t*)one)->job_id - ((job_t*)two)->job_id);
+  }
+  return dif;
 }
 
 int sjf(const void* one, const void* two) {
@@ -104,13 +108,13 @@ int rr(const void* one, const void* two) {
 }
 
 
-int (*active_cmp(int(*comparer)(const void *, const void *)))(const void* one, const void* two) {
-  return comparer;
-}
-
-// int active_cmp(const void* one, const void* two) {
-//   return ((core_job_t*)one)->job->job_id - ((core_job_t*)two)->job->job_id;
+// int (*active_cmp(int(*comparer)(const void *, const void *)))(const void* one, const void* two) {
+//   return comparer;
 // }
+
+int active_cmp(const void* one, const void* two) {
+  return ((core_job_t*)one)->core->core_id - ((core_job_t*)two)->core->core_id;
+}
 
 int core_cmp(const void* one, const void* two) {
   return ((core_t*)one)->core_id - ((core_t*)two)->core_id;
@@ -153,7 +157,7 @@ void scheduler_start_up(int cores, scheme_t scheme)
 
   priqueue_init(&_scheduler.job_queue, cmp);
   priqueue_init(&_scheduler.core_queue, &core_cmp);
-  priqueue_init(&_scheduler.active_queue, (*active_cmp)(cmp));
+  priqueue_init(&_scheduler.active_queue, &active_cmp);
 
   for (int i = cores - 1; i >= 0; i--) {
     core_t* tempCore = malloc(sizeof(core_t));
@@ -264,7 +268,7 @@ int scheduler_job_finished(int core_id, int job_number, int time)
     newActive = scheduler_update(time);
     if (newActive != NULL && newActive->core->core_id == core_id) newJob = newActive->job->job_id;
   } while(newActive != NULL);
-  return newJob;
+return newJob;
 }
 
 
