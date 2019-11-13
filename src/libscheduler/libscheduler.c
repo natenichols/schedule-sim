@@ -74,17 +74,25 @@ int fcfs(const void* one, const void* two) {
 int sjf(const void* one, const void* two) {
   int dif = (((job_t*)one)->burst_time - ((job_t*)two)->burst_time);
   if(dif == 0) {
-    return (((job_t*)one)->job_priority - ((job_t*)two)->job_priority);
+    return (((job_t*)one)->arrival_time - ((job_t*)two)->arrival_time);
   }
   return dif;
 }
 
 int psjf(const void* one, const void* two) {
-  return -1;
+  int dif = (((job_t*)one)->burst_time - ((job_t*)two)->burst_time);
+  if(dif == 0) {
+    return (((job_t*)one)->arrival_time - ((job_t*)two)->arrival_time);
+  }
+  return dif;
 }
 
 int pri(const void* one, const void* two) {
-  return ((job_t*)one)->job_priority - ((job_t*)two)->job_priority;
+  int dif = (((job_t*)one)->job_priority - ((job_t*)two)->job_priority);
+  if(dif == 0) {
+    return (((job_t*)one)->arrival_time - ((job_t*)two)->arrival_time);
+  }
+  return dif;
 }
 
 int ppri(const void* one, const void* two) {
@@ -92,7 +100,7 @@ int ppri(const void* one, const void* two) {
 }
 
 int rr(const void* one, const void* two) {
-  return -1;
+  return 1;
 }
 
 int active_cmp(const void* one, const void* two) {
@@ -270,8 +278,18 @@ int scheduler_quantum_expired(int core_id, int time)
     index++;
   }
   if (index >= size) return -1;
+  
+  core_job_t* preempted_active = priqueue_remove_at(&_scheduler.active_queue, index);
+  preempted_active->job->burst_time -= (time - preempted_active->job->arrival_time);
 
-	return scheduler_job_finished(core_id, ((core_job_t*)priqueue_at(&_scheduler.active_queue, index))->job->job_id, time);
+  priqueue_offer(&_scheduler.job_queue, preempted_active->job);
+  priqueue_offer(&_scheduler.core_queue, preempted_active->core);
+
+  core_job_t* newActive = scheduler_update(time);
+  if(newActive != NULL && newActive->core == core_id) {
+    return newActive->job->job_id;
+  }
+	return -1;
 }
 
 
