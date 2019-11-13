@@ -71,6 +71,8 @@ int ret(const void* one, const void* two) {
 }
 
 int fcfs(const void* one, const void* two) {
+
+  
   return -1;
 }
 
@@ -89,6 +91,7 @@ int pri(const void* one, const void* two) {
 int ppri(const void* one, const void* two) {
   return -1;
 }
+
 int rr(const void* one, const void* two) {
   return -1;
 }
@@ -103,7 +106,7 @@ void scheduler_start_up(int cores, scheme_t scheme)
   _scheduler.total_wait_time = 0;
   _scheduler.total_jobs_complete = 0;
 
-  int (*cmp)(const void*, const void*) = NULL;
+  int (*cmp)(const void*, const void*);
 
   switch(scheme) {
     case FCFS:
@@ -128,9 +131,9 @@ void scheduler_start_up(int cores, scheme_t scheme)
       return;
   }
 
-  priqueue_init(&_scheduler.job_queue, &ret);
-  priqueue_init(&_scheduler.core_queue, &ret);
-  priqueue_init(&_scheduler.active_queue, &ret);
+  priqueue_init(&_scheduler.job_queue, cmp);
+  priqueue_init(&_scheduler.core_queue, cmp);
+  priqueue_init(&_scheduler.active_queue, cmp);
 
   for (int i = cores - 1; i >= 0; i--) {
     core_t* tempCore = malloc(sizeof(core_t));
