@@ -68,7 +68,7 @@ core_job_t* scheduler_update(int time);
   @param scheme  the scheduling scheme that should be used. This value will be one of the six enum values of scheme_t
 */
 int fcfs(const void* one, const void* two) {
-  return -1;
+  return 1;
 }
 
 int sjf(const void* one, const void* two) {
@@ -103,12 +103,17 @@ int rr(const void* one, const void* two) {
   return 1;
 }
 
-int active_cmp(const void* one, const void* two) {
-  return -1;
+
+int (*active_cmp(int(*comparer)(const void *, const void *)))(const void* one, const void* two) {
+  return comparer;
 }
 
+// int active_cmp(const void* one, const void* two) {
+//   return ((core_job_t*)one)->job->job_id - ((core_job_t*)two)->job->job_id;
+// }
+
 int core_cmp(const void* one, const void* two) {
-  return ((core_t*)two)->core_id - ((core_t*)one)->core_id;
+  return ((core_t*)one)->core_id - ((core_t*)two)->core_id;
 }
 
 void scheduler_start_up(int cores, scheme_t scheme)
@@ -148,7 +153,7 @@ void scheduler_start_up(int cores, scheme_t scheme)
 
   priqueue_init(&_scheduler.job_queue, cmp);
   priqueue_init(&_scheduler.core_queue, &core_cmp);
-  priqueue_init(&_scheduler.active_queue, &active_cmp);
+  priqueue_init(&_scheduler.active_queue, (*active_cmp)(cmp));
 
   for (int i = cores - 1; i >= 0; i--) {
     core_t* tempCore = malloc(sizeof(core_t));
@@ -180,6 +185,8 @@ void scheduler_start_up(int cores, scheme_t scheme)
  */
 int scheduler_new_job(int job_number, int time, int running_time, int priority)
 {
+  _scheduler.total_jobs_complete++;
+
   job_t* j = malloc(sizeof(job_t));
   j->job_id = job_number;
   j->job_priority = priority;
@@ -187,6 +194,9 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
   j->arrival_time = time;
 
   priqueue_offer(&_scheduler.job_queue, j);
+
+  // int core_remove = ( (core_job_t*) priqueue_at(&_scheduler.active_queue, priqueue_size(&_scheduler.active_queue) - 1))->core->core_id;
+  // return scheduler_quantum_expired(core_remove, time);
 
   int newCore = -1;
   core_job_t* newActive;
@@ -206,7 +216,8 @@ core_job_t* scheduler_update(int time)
   newActive->time = time;
   newActive->job = priqueue_poll(&_scheduler.job_queue);
   newActive->core = priqueue_poll(&_scheduler.core_queue);
-
+  _scheduler.total_wait_time += time - newActive->job->arrival_time;
+  _scheduler.total_response_time += time - newActive->job->arrival_time;
   priqueue_offer(&_scheduler.active_queue, newActive);
 
 	return newActive;
@@ -232,7 +243,7 @@ int scheduler_job_finished(int core_id, int job_number, int time)
   // TODO: MAKE THIS MORE EFFICIENT
   int index = 0;
   int size = priqueue_size(&_scheduler.active_queue);
-  while (index < size && ((core_job_t*)priqueue_at(&_scheduler.active_queue, index))->core->core_id == core_id) {
+  while (index < size && ((core_job_t*)priqueue_at(&_scheduler.active_queue, index))->core->core_id != core_id) {
     index++;
   }
   if (index >= size) return -1;
@@ -243,6 +254,7 @@ int scheduler_job_finished(int core_id, int job_number, int time)
   priqueue_offer(&_scheduler.core_queue, finished->core);
 
   // TODO: MODIFY TIME
+  _scheduler.total_turnaround_time += time - finished->job->arrival_time;
 
   free(finished);
 
@@ -252,7 +264,6 @@ int scheduler_job_finished(int core_id, int job_number, int time)
     newActive = scheduler_update(time);
     if (newActive != NULL && newActive->core->core_id == core_id) newJob = newActive->job->job_id;
   } while(newActive != NULL);
-
   return newJob;
 }
 
@@ -286,7 +297,7 @@ int scheduler_quantum_expired(int core_id, int time)
   priqueue_offer(&_scheduler.core_queue, preempted_active->core);
 
   core_job_t* newActive = scheduler_update(time);
-  if(newActive != NULL && newActive->core == core_id) {
+  if(newActive != NULL && newActive->core->core_id == core_id) {
     return newActive->job->job_id;
   }
 	return -1;
@@ -371,21 +382,19 @@ char* getCoreID(const void * core);
 char* getActiveID(const void * active) ;
 void scheduler_show_queue()
 {
-  printf("Jobs:\n");
-  print_queue(&_scheduler.job_queue, &getJobID);
-  printf("Cores:\n");
-  print_queue(&_scheduler.core_queue, &getJobID);
-  printf("Active jobs are: \n");
   print_queue(&_scheduler.active_queue, &getActiveID);
+  print_queue(&_scheduler.job_queue, &getJobID);
+  
 }
 char* getJobID(const void * job) {
   if (job != NULL) {
     int num = ((job_t*)job)->job_id;
-    char* str = malloc(sizeof(char)*((int)log10(num+2)));
-    sprintf(str, "%d", num);
+    int priority = ((job_t*)job)->job_priority;
+    char* str = malloc(sizeof(char)*((int)log10(num+2)) + sizeof(char)*((int)log10(priority+2))+ 2);
+    sprintf(str, "%d(%d)", num, priority);
     return str;
   }
-  return "-1";
+  return "";
 }
 char* getCoreID(const void * core) {
   if (core != NULL) {
@@ -394,8 +403,8 @@ char* getCoreID(const void * core) {
     sprintf(str, "%d", num);
     return str;
   }
-  return "-1";
+  return "";
 }
 char* getActiveID(const void * active) {
-  return (active != NULL) ? getJobID(((core_job_t*) active)->core) : "-1";
+  return (active != NULL) ? getJobID(((core_job_t*) active)->job) : "";
 }
