@@ -57,19 +57,18 @@ int priqueue_offer(priqueue_t *q, void *ptr)
       iter = iter->next;
       index++;
     }
-
-    if(iter->next == NULL && q->cmp(ptr, iter->val) > 0) {
+    if(q->cmp(ptr, iter->val) > 0) {
+      if(iter->next == NULL) q->tail = entry;
+      else iter->next->prev = entry;
       entry->prev = iter;
+      entry->next = iter->next;
       iter->next = entry;
-      q->tail = entry;
     }
     else {
-      if(iter->prev == NULL)
-        q->head = entry;
-      else 
-        iter->prev->next = entry;
-
+      if(iter->prev == NULL) q->head = entry;
+      else iter->prev->next = entry;
       entry->next = iter;
+      entry->prev = iter->prev;
       iter->prev = entry;
     }
   }
@@ -112,7 +111,7 @@ void print_queue(priqueue_t *q, char*(*access)(const void *)) {
 void *priqueue_poll(priqueue_t *q)
 {
   if(q->size == 0) return NULL;
-  void *data = q->head->val;
+   void *data = q->head->val;
   priqueue_remove_at(q, 0);
   return data;
 }
@@ -193,10 +192,10 @@ int priqueue_remove(priqueue_t *q, void *ptr)
  */
 void *priqueue_remove_at(priqueue_t *q, int index)
 {
-  if(index >= q->size) return NULL;
+  if(index >= q->size || index < 0) return NULL;
 
   list_node* temp = q->head;
-  while(index > 1) {
+  while(index > 0) {
     temp = temp->next;
     index--;
   }
