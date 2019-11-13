@@ -1,5 +1,5 @@
 # Change this line before submission
-STUDENTLASTNAMES = Kurait-Nichols
+STUDENTLASTNAMES = Student1-Student2
 PROGNAME = simulator
 
 CC = gcc --std=gnu11
@@ -57,18 +57,18 @@ $(OBJINNERDIRS):
 # Build the program
 $(PROGNAME): $(OBJINNERDIRS) $(PROGNAME)-inner
 $(PROGNAME)-inner: $(OFILES)
-	$(CC) $(CFLAGS) $^ -o $(PROGNAME) $(LIBLIST) -lm
+	$(CC) $(CFLAGS) $^ -o $(PROGNAME) $(LIBLIST)
 
 
 # Generic build target for all compilation units. NOTE: Changing a
 # header requires you to rebuild the entire project
 $(OBJDIR)%.o: $(SRCDIR)%.c $(HFILES)
-	$(CC) $(CFLAGS) -c $(INCDIRS) -o $@ $< $(LIBS) -lm
+	$(CC) $(CFLAGS) -c $(INCDIRS) -o $@ $< $(LIBS)
 
 # Build a testing harness for the priority queue
 queuetest: $(OBJINNERDIRS) queuetest-inner
-queuetest-inner: ./src/queuetest.c ./obj/libpriqueue/libpriqueue.o
-	$(CC) $(CFLAGS) $^ -o queuetest $(LIBLIST) -lm
+queuetest-inner: ./src/queuetest.c ./src/libpriqueue/libpriqueue.o
+	$(CC) $(CFLAGS) $^ -o queuetest $(LIBLIST)
 
 # Build and run the program
 test: all
