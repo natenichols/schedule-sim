@@ -9,7 +9,6 @@
 #include "../libpriqueue/libpriqueue.h"
 
 
-
 /**
   Stores information making up a job to be scheduled including any statistics.
 
@@ -71,6 +70,29 @@ int ret(const void* one, const void* two) {
   return -1;
 }
 
+int fcfs(const void* one, const void* two) {
+  return -1;
+}
+
+int sjf(const void* one, const void* two) {
+  return -1;
+}
+
+int psjf(const void* one, const void* two) {
+  return -1;
+}
+
+int pri(const void* one, const void* two) {
+  return -1;
+}
+
+int ppri(const void* one, const void* two) {
+  return -1;
+}
+int rr(const void* one, const void* two) {
+  return -1;
+}
+
 void scheduler_start_up(int cores, scheme_t scheme)
 {
   _scheduler.cores = cores;
@@ -80,6 +102,31 @@ void scheduler_start_up(int cores, scheme_t scheme)
   _scheduler.total_turnaround_time = 0;
   _scheduler.total_wait_time = 0;
   _scheduler.total_jobs_complete = 0;
+
+  int (*cmp)(const void*, const void*) = NULL;
+
+  switch(scheme) {
+    case FCFS:
+      cmp = fcfs;
+      break;
+    case SJF:
+      cmp = sjf;
+      break;
+    case PSJF:
+      cmp = psjf;
+      break;
+    case PRI:
+      cmp = pri;
+      break;
+    case PPRI:
+      cmp = ppri;
+      break;
+    case RR:
+      cmp = rr;
+      break;
+    default:
+      return;
+  }
 
   priqueue_init(&_scheduler.job_queue, &ret);
   priqueue_init(&_scheduler.core_queue, &ret);
