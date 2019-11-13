@@ -67,18 +67,16 @@ core_job_t* scheduler_update(int time);
   @param cores the number of cores that is available by the scheduler. These cores will be known as core(id=0), core(id=1), ..., core(id=cores-1).
   @param scheme  the scheduling scheme that should be used. This value will be one of the six enum values of scheme_t
 */
-int ret(const void* one, const void* two) {
-  return -1;
-}
-
 int fcfs(const void* one, const void* two) {
-
-  
   return -1;
 }
 
 int sjf(const void* one, const void* two) {
-  return -1;
+  int dif = (((job_t*)one)->burst_time - ((job_t*)two)->burst_time);
+  if(dif == 0) {
+    return (((job_t*)one)->job_priority - ((job_t*)two)->job_priority);
+  }
+  return dif;
 }
 
 int psjf(const void* one, const void* two) {
@@ -86,7 +84,7 @@ int psjf(const void* one, const void* two) {
 }
 
 int pri(const void* one, const void* two) {
-  return -1;
+  return ((job_t*)one)->job_priority - ((job_t*)two)->job_priority;
 }
 
 int ppri(const void* one, const void* two) {
@@ -95,6 +93,14 @@ int ppri(const void* one, const void* two) {
 
 int rr(const void* one, const void* two) {
   return -1;
+}
+
+int active_cmp(const void* one, const void* two) {
+  return -1;
+}
+
+int core_cmp(const void* one, const void* two) {
+  return ((core_t*)two)->core_id - ((core_t*)one)->core_id;
 }
 
 void scheduler_start_up(int cores, scheme_t scheme)
@@ -133,8 +139,8 @@ void scheduler_start_up(int cores, scheme_t scheme)
   }
 
   priqueue_init(&_scheduler.job_queue, cmp);
-  priqueue_init(&_scheduler.core_queue, cmp);
-  priqueue_init(&_scheduler.active_queue, cmp);
+  priqueue_init(&_scheduler.core_queue, &core_cmp);
+  priqueue_init(&_scheduler.active_queue, &active_cmp);
 
   for (int i = cores - 1; i >= 0; i--) {
     core_t* tempCore = malloc(sizeof(core_t));
