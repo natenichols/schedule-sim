@@ -19,6 +19,7 @@ typedef struct _job_t
   int job_id;
   int job_priority;
   float burst_time;
+  int arrival_time;
 } job_t;
 
 typedef struct _core_t
@@ -169,6 +170,7 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
   j->job_id = job_number;
   j->job_priority = priority;
   j->burst_time = running_time;
+  j->arrival_time = time;
 
   priqueue_offer(&_scheduler.job_queue, j);
 
