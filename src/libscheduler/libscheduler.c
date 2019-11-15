@@ -200,7 +200,11 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
 
   job_t* j = malloc(sizeof(job_t));
   j->job_id = job_number;
-  j->job_priority = priority;
+  if(_scheduler.scheme == RR) {
+    j->job_priority = -1;
+  } else {
+    j->job_priority = priority;
+  }
   j->burst_time = running_time;
   j->arrival_time = time;
 
@@ -300,17 +304,21 @@ int scheduler_quantum_expired(int core_id, int time)
 {
   int index = 0;
   int size = priqueue_size(&_scheduler.active_queue);
+  // printf("Attempting to expire core %d with queue size %d\n", core_id, size);
   while (index < size && ((core_job_t*)priqueue_at(&_scheduler.active_queue, index))->core->core_id != core_id) {
     index++;
   }
+  // printf("Index found was %d\n", index);
+  
   if (index >= size) return -1;
 
   core_job_t* preempted_active = priqueue_remove_at(&_scheduler.active_queue, index);
   preempted_active->job->burst_time -= (time - preempted_active->job->arrival_time);
-
-  if(preempted_active->job->burst_time > 0) {
-    priqueue_offer(&_scheduler.job_queue, preempted_active->job);
-  }
+   preempted_active->job->arrival_time = time;
+  // printf("New Burst time %f\n", preempted_active->job->burst_time);
+  
+  priqueue_offer(&_scheduler.job_queue, preempted_active->job);
+  
   priqueue_offer(&_scheduler.core_queue, preempted_active->core);
 
   core_job_t* newActive = scheduler_update(time);
