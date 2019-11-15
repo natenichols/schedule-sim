@@ -100,7 +100,11 @@ int pri(const void* one, const void* two) {
 }
 
 int ppri(const void* one, const void* two) {
-  return -1;
+  int dif = (((job_t*)one)->job_priority - ((job_t*)two)->job_priority);
+  if(dif == 0) {
+    return (((job_t*)one)->arrival_time - ((job_t*)two)->arrival_time);
+  }
+  return dif;
 }
 
 int rr(const void* one, const void* two) {
@@ -108,9 +112,9 @@ int rr(const void* one, const void* two) {
 }
 
 
-// int (*active_cmp(int(*comparer)(const void *, const void *)))(const void* one, const void* two) {
-//   return comparer;
-// }
+int (*active_cmp1(int(*comparer)(const void *, const void *)))(const void* one, const void* two) {
+  return comparer;
+}
 
 int active_cmp(const void* one, const void* two) {
   return ((core_job_t*)one)->core->core_id - ((core_job_t*)two)->core->core_id;
@@ -157,7 +161,10 @@ void scheduler_start_up(int cores, scheme_t scheme)
 
   priqueue_init(&_scheduler.job_queue, cmp);
   priqueue_init(&_scheduler.core_queue, &core_cmp);
-  priqueue_init(&_scheduler.active_queue, &active_cmp);
+  if(_scheduler.scheme == PSJF || _scheduler.scheme == PPRI) {
+  priqueue_init(&_scheduler.active_queue, (*active_cmp1)(cmp));
+  }
+  else priqueue_init(&_scheduler.active_queue, &active_cmp);
 
   for (int i = cores - 1; i >= 0; i--) {
     core_t* tempCore = malloc(sizeof(core_t));
@@ -199,8 +206,12 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
 
   priqueue_offer(&_scheduler.job_queue, j);
 
-  // int core_remove = ( (core_job_t*) priqueue_at(&_scheduler.active_queue, priqueue_size(&_scheduler.active_queue) - 1))->core->core_id;
-  // return scheduler_quantum_expired(core_remove, time);
+  if(_scheduler.scheme == PSJF || _scheduler.scheme == PPRI) {
+    if(priqueue_size(&_scheduler.active_queue) > 0) {
+      int core_remove = ( (core_job_t*) priqueue_at(&_scheduler.active_queue, priqueue_size(&_scheduler.active_queue)-1))->core->core_id;
+      return scheduler_quantum_expired(core_remove, time);
+    }
+  }
 
   int newCore = -1;
   core_job_t* newActive;
@@ -289,15 +300,17 @@ int scheduler_quantum_expired(int core_id, int time)
 {
   int index = 0;
   int size = priqueue_size(&_scheduler.active_queue);
-  while (index < size && ((core_job_t*)priqueue_at(&_scheduler.active_queue, index))->core->core_id == core_id) {
+  while (index < size && ((core_job_t*)priqueue_at(&_scheduler.active_queue, index))->core->core_id != core_id) {
     index++;
   }
   if (index >= size) return -1;
-  
+
   core_job_t* preempted_active = priqueue_remove_at(&_scheduler.active_queue, index);
   preempted_active->job->burst_time -= (time - preempted_active->job->arrival_time);
 
-  priqueue_offer(&_scheduler.job_queue, preempted_active->job);
+  if(preempted_active->job->burst_time > 0) {
+    priqueue_offer(&_scheduler.job_queue, preempted_active->job);
+  }
   priqueue_offer(&_scheduler.core_queue, preempted_active->core);
 
   core_job_t* newActive = scheduler_update(time);
