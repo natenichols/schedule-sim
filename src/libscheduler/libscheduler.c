@@ -20,6 +20,7 @@ typedef struct _job_t
   int job_priority;
   float burst_time;
   int arrival_time;
+  int hasBeenScheduled;
 } job_t;
 
 typedef struct _core_t
@@ -48,13 +49,17 @@ typedef struct _scheduler_t
   float total_wait_time;
   float total_turnaround_time;
   float total_response_time;
+  float total_run_time;
+  int    total_responses;
 } scheduler_t;
 
 scheduler_t _scheduler;
 
 // Helper Functions
 core_job_t* scheduler_update(int time);
-
+char* getJobID(const void * job);
+char* getCoreID(const void * core);
+char* getActiveID(const void * active) ;
 /**
   Initalizes the scheduler.
  
@@ -129,8 +134,10 @@ void scheduler_start_up(int cores, scheme_t scheme)
   _scheduler.cores = cores;
   _scheduler.scheme = scheme;
 
-  _scheduler.total_response_time = 0;
   _scheduler.total_turnaround_time = 0;
+  _scheduler.total_response_time = 0;
+  _scheduler.total_responses = 0;
+  _scheduler.total_run_time = 0;
   _scheduler.total_wait_time = 0;
   _scheduler.total_jobs_complete = 0;
 
@@ -162,9 +169,11 @@ void scheduler_start_up(int cores, scheme_t scheme)
   priqueue_init(&_scheduler.job_queue, cmp);
   priqueue_init(&_scheduler.core_queue, &core_cmp);
   if(_scheduler.scheme == PSJF || _scheduler.scheme == PPRI) {
-  priqueue_init(&_scheduler.active_queue, (*active_cmp1)(cmp));
+    priqueue_init(&_scheduler.active_queue, (*active_cmp1)(cmp));
   }
-  else priqueue_init(&_scheduler.active_queue, &active_cmp);
+  else {
+    priqueue_init(&_scheduler.active_queue, &active_cmp);
+  }
 
   for (int i = cores - 1; i >= 0; i--) {
     core_t* tempCore = malloc(sizeof(core_t));
@@ -196,7 +205,11 @@ void scheduler_start_up(int cores, scheme_t scheme)
  */
 int scheduler_new_job(int job_number, int time, int running_time, int priority)
 {
+  // printf("New Job, size of coress is %d\n\n", priqueue_size(&_scheduler.core_queue) + priqueue_size(&_scheduler.active_queue) );
+      
   _scheduler.total_jobs_complete++;
+  _scheduler.total_turnaround_time -= time;
+  _scheduler.total_run_time += running_time;
 
   job_t* j = malloc(sizeof(job_t));
   j->job_id = job_number;
@@ -207,14 +220,19 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
   }
   j->burst_time = running_time;
   j->arrival_time = time;
-
+  j->hasBeenScheduled = 0;
+  
   priqueue_offer(&_scheduler.job_queue, j);
+  
+  //printf("New Job %d offer: ", job_number);print_queue(&_scheduler.job_queue, &getJobID);
 
-  if(_scheduler.scheme == PSJF || _scheduler.scheme == PPRI) {
-    if(priqueue_size(&_scheduler.active_queue) > 0) {
+  if((_scheduler.scheme == PSJF || _scheduler.scheme == PPRI) && (priqueue_size(&_scheduler.core_queue) == 0)) {
+      // print_queue(&_scheduler.active_queue, &getActiveID);
       int core_remove = ( (core_job_t*) priqueue_at(&_scheduler.active_queue, priqueue_size(&_scheduler.active_queue)-1))->core->core_id;
-      return scheduler_quantum_expired(core_remove, time);
-    }
+      if(scheduler_quantum_expired(core_remove, time) == job_number) {
+        return core_remove;
+      }
+      return -1;
   }
 
   int newCore = -1;
@@ -229,6 +247,8 @@ int scheduler_new_job(int job_number, int time, int running_time, int priority)
 
 core_job_t* scheduler_update(int time)
 {
+  // printf("Update, size of cores is %d\n\n", priqueue_size(&_scheduler.core_queue) + priqueue_size(&_scheduler.active_queue) );
+  
   if (priqueue_size(&_scheduler.job_queue) <= 0 || priqueue_size(&_scheduler.core_queue) <= 0) return NULL;
   
   core_job_t* newActive = malloc(sizeof(core_job_t));
@@ -236,9 +256,10 @@ core_job_t* scheduler_update(int time)
   newActive->job = priqueue_poll(&_scheduler.job_queue);
   newActive->core = priqueue_poll(&_scheduler.core_queue);
   _scheduler.total_wait_time += time - newActive->job->arrival_time;
-  _scheduler.total_response_time += time - newActive->job->arrival_time;
-  priqueue_offer(&_scheduler.active_queue, newActive);
 
+  priqueue_offer(&_scheduler.active_queue, newActive);
+// printf("Update after, size of cores is %d\n\n", priqueue_size(&_scheduler.core_queue) + priqueue_size(&_scheduler.active_queue) );
+    
 	return newActive;
 }
 
@@ -259,6 +280,7 @@ core_job_t* scheduler_update(int time)
  */
 int scheduler_job_finished(int core_id, int job_number, int time)
 {
+  _scheduler.total_turnaround_time += time;
   // TODO: MAKE THIS MORE EFFICIENT
   int index = 0;
   int size = priqueue_size(&_scheduler.active_queue);
@@ -268,12 +290,10 @@ int scheduler_job_finished(int core_id, int job_number, int time)
   if (index >= size) return -1;
 
   core_job_t* finished = priqueue_remove_at(&_scheduler.active_queue, index);
-  // It is assumed that this core will have the job with matching job_number
-
   priqueue_offer(&_scheduler.core_queue, finished->core);
 
-  // TODO: MODIFY TIME
-  _scheduler.total_turnaround_time += time - finished->job->arrival_time;
+   if(finished->job->hasBeenScheduled == 0)
+    _scheduler.total_response_time += finished->time - finished->job->arrival_time;
 
   free(finished);
 
@@ -313,19 +333,21 @@ int scheduler_quantum_expired(int core_id, int time)
   if (index >= size) return -1;
 
   core_job_t* preempted_active = priqueue_remove_at(&_scheduler.active_queue, index);
-  preempted_active->job->burst_time -= (time - preempted_active->job->arrival_time);
-   preempted_active->job->arrival_time = time;
-  // printf("New Burst time %f\n", preempted_active->job->burst_time);
-  
-  priqueue_offer(&_scheduler.job_queue, preempted_active->job);
-  
-  priqueue_offer(&_scheduler.core_queue, preempted_active->core);
-
-  core_job_t* newActive = scheduler_update(time);
-  if(newActive != NULL && newActive->core->core_id == core_id) {
-    return newActive->job->job_id;
+   if(preempted_active->job->hasBeenScheduled == 0 && (preempted_active->time - preempted_active->job->arrival_time) > 0) {
+    _scheduler.total_response_time += preempted_active->time - preempted_active->job->arrival_time;
+    preempted_active->job->hasBeenScheduled = 1;
   }
-	return -1;
+  preempted_active->job->burst_time -= (time - preempted_active->time);
+  preempted_active->job->arrival_time = time;
+  priqueue_offer(&_scheduler.job_queue, preempted_active->job);
+
+  job_t* newJob = priqueue_poll(&_scheduler.job_queue);
+  preempted_active->time = time;
+  preempted_active->job = newJob;
+  _scheduler.total_wait_time += time - preempted_active->job->arrival_time;
+
+  priqueue_offer(&_scheduler.active_queue, preempted_active);
+	return preempted_active->job->job_id;
 }
 
 
@@ -402,9 +424,6 @@ void scheduler_clean_up()
   This function is not required and will not be graded. You may leave it
   blank if you do not find it useful.
  */
-char* getJobID(const void * job);
-char* getCoreID(const void * core);
-char* getActiveID(const void * active) ;
 void scheduler_show_queue()
 {
   print_queue(&_scheduler.active_queue, &getActiveID);
