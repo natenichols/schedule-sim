@@ -206,8 +206,6 @@ void scheduler_start_up(int cores, scheme_t scheme)
 int scheduler_new_job(int job_number, int time, int running_time, int priority)
 {
   // printf("New Job, size of coress is %d\n\n", priqueue_size(&_scheduler.core_queue) + priqueue_size(&_scheduler.active_queue) );
-      
-  _scheduler.total_jobs_complete++;
   _scheduler.total_turnaround_time -= time;
   _scheduler.total_run_time += running_time;
 
@@ -280,6 +278,7 @@ core_job_t* scheduler_update(int time)
  */
 int scheduler_job_finished(int core_id, int job_number, int time)
 {
+  _scheduler.total_jobs_complete++;
   _scheduler.total_turnaround_time += time;
   // TODO: MAKE THIS MORE EFFICIENT
   int index = 0;
@@ -333,7 +332,7 @@ int scheduler_quantum_expired(int core_id, int time)
   if (index >= size) return -1;
 
   core_job_t* preempted_active = priqueue_remove_at(&_scheduler.active_queue, index);
-   if(preempted_active->job->hasBeenScheduled == 0 && (preempted_active->time - preempted_active->job->arrival_time) > 0) {
+  if(preempted_active->job->hasBeenScheduled == 0 && (time - preempted_active->time) > 0) {
     _scheduler.total_response_time += preempted_active->time - preempted_active->job->arrival_time;
     preempted_active->job->hasBeenScheduled = 1;
   }
