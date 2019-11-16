@@ -35,7 +35,7 @@
 ./simulator -c 1 -s sjf examples/proc2.csv > test.out ; diff -u test.out examples/proc2-c1-sjf.out
 
 ./simulator -c 2 -s fcfs examples/proc2.csv > test.out ; diff -u test.out examples/proc2-c2-fcfs.out
-# ./simulator -c 2 -s ppri examples/proc2.csv > test.out ; diff -u test.out examples/proc2-c2-ppri.out
+./simulator -c 2 -s ppri examples/proc2.csv > test.out ; diff -u test.out examples/proc2-c2-ppri.out
 ./simulator -c 2 -s pri examples/proc2.csv > test.out ; diff -u test.out examples/proc2-c2-pri.out
 # ./simulator -c 2 -s psjf examples/proc2.csv > test.out ; diff -u test.out examples/proc2-c2-psjf.out
 ./simulator -c 2 -s rr1 examples/proc2.csv > test.out ; diff -u test.out examples/proc2-c2-rr1.out

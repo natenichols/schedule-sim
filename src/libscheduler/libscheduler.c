@@ -112,10 +112,26 @@ int ppri(const void* one, const void* two) {
   return dif;
 }
 
+int active_ppri(const void* one, const void* two) {
+  int dif = (((core_job_t*)one)->job->job_priority - ((core_job_t*)two)->job->job_priority);
+  if(dif == 0) {
+    return (((core_job_t*)one)->job->arrival_time - ((core_job_t*)two)->job->arrival_time);
+  }
+  return dif;
+}
+
+int active_psjf(const void* one, const void* two) {
+  int dif = (((core_job_t*)one)->job->burst_time - ((core_job_t*)two)->job->burst_time);
+  if(dif == 0) {
+    return (((core_job_t*)one)->job->arrival_time - ((core_job_t*)two)->job->arrival_time);
+  }
+  return dif;
+}
+
+
 int rr(const void* one, const void* two) {
   return 1;
 }
-
 
 int (*active_cmp1(int(*comparer)(const void *, const void *)))(const void* one, const void* two) {
   return comparer;
@@ -168,8 +184,11 @@ void scheduler_start_up(int cores, scheme_t scheme)
 
   priqueue_init(&_scheduler.job_queue, cmp);
   priqueue_init(&_scheduler.core_queue, &core_cmp);
-  if(_scheduler.scheme == PSJF || _scheduler.scheme == PPRI) {
-    priqueue_init(&_scheduler.active_queue, (*active_cmp1)(cmp));
+  if( _scheduler.scheme == PPRI) {
+    priqueue_init(&_scheduler.active_queue, &active_ppri);
+  }
+  else if( _scheduler.scheme == PSJF) {
+    priqueue_init(&_scheduler.active_queue, &active_psjf);
   }
   else {
     priqueue_init(&_scheduler.active_queue, &active_cmp);
