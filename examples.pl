@@ -10,7 +10,7 @@ for $file (<examples/*>){
 		`tail -7 $file > output2`;
 		$diff = `diff output1 output2`;
 		if($diff){
-			print "Test file $file differs\n";
+			print "Test file $file differs:\n";
 		}
 	}
 }

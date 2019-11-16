@@ -121,7 +121,10 @@ int active_ppri(const void* one, const void* two) {
 }
 
 int active_psjf(const void* one, const void* two) {
-  int dif = (((core_job_t*)one)->job->burst_time - ((core_job_t*)two)->job->burst_time);
+  int oneTimeToFinish = ((core_job_t*)one)->time + ((core_job_t*)one)->job->burst_time;
+  int twoTimeToFinish = ((core_job_t*)two)->time + ((core_job_t*)two)->job->burst_time;
+  int dif = oneTimeToFinish - twoTimeToFinish;
+
   if(dif == 0) {
     return (((core_job_t*)one)->job->job_id - ((core_job_t*)two)->job->job_id);
   }
