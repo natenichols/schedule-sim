@@ -83,7 +83,7 @@ int fcfs(const void* one, const void* two) {
 int sjf(const void* one, const void* two) {
   int dif = (((job_t*)one)->burst_time - ((job_t*)two)->burst_time);
   if(dif == 0) {
-    return (((job_t*)one)->arrival_time - ((job_t*)two)->arrival_time);
+    return (((job_t*)one)->job_id - ((job_t*)two)->job_id);
   }
   return dif;
 }
@@ -91,7 +91,7 @@ int sjf(const void* one, const void* two) {
 int psjf(const void* one, const void* two) {
   int dif = (((job_t*)one)->burst_time - ((job_t*)two)->burst_time);
   if(dif == 0) {
-    return (((job_t*)one)->arrival_time - ((job_t*)two)->arrival_time);
+    return (((job_t*)one)->job_id - ((job_t*)two)->job_id);
   }
   return dif;
 }
@@ -99,7 +99,7 @@ int psjf(const void* one, const void* two) {
 int pri(const void* one, const void* two) {
   int dif = (((job_t*)one)->job_priority - ((job_t*)two)->job_priority);
   if(dif == 0) {
-    return (((job_t*)one)->arrival_time - ((job_t*)two)->arrival_time);
+    return (((job_t*)one)->job_id - ((job_t*)two)->job_id);
   }
   return dif;
 }
@@ -107,7 +107,7 @@ int pri(const void* one, const void* two) {
 int ppri(const void* one, const void* two) {
   int dif = (((job_t*)one)->job_priority - ((job_t*)two)->job_priority);
   if(dif == 0) {
-    return (((job_t*)one)->arrival_time - ((job_t*)two)->arrival_time);
+    return (((job_t*)one)->job_id - ((job_t*)two)->job_id);
   }
   return dif;
 }
@@ -115,7 +115,7 @@ int ppri(const void* one, const void* two) {
 int active_ppri(const void* one, const void* two) {
   int dif = (((core_job_t*)one)->job->job_priority - ((core_job_t*)two)->job->job_priority);
   if(dif == 0) {
-    return (((core_job_t*)one)->job->arrival_time - ((core_job_t*)two)->job->arrival_time);
+    return (((core_job_t*)one)->job->job_id - ((core_job_t*)two)->job->job_id);
   }
   return dif;
 }
@@ -123,7 +123,7 @@ int active_ppri(const void* one, const void* two) {
 int active_psjf(const void* one, const void* two) {
   int dif = (((core_job_t*)one)->job->burst_time - ((core_job_t*)two)->job->burst_time);
   if(dif == 0) {
-    return (((core_job_t*)one)->job->arrival_time - ((core_job_t*)two)->job->arrival_time);
+    return (((core_job_t*)one)->job->job_id - ((core_job_t*)two)->job->job_id);
   }
   return dif;
 }
