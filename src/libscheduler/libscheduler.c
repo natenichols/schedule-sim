@@ -317,6 +317,7 @@ int scheduler_job_finished(int core_id, int job_number, int time)
    if(finished->job->hasBeenScheduled == 0)
     _scheduler.total_response_time += finished->time;
 
+  free(finished->job);
   free(finished);
 
   int newJob = -1;
@@ -448,8 +449,8 @@ void scheduler_clean_up()
  */
 void scheduler_show_queue()
 {
-  print_queue(&_scheduler.active_queue, &getActiveID);
-  print_queue(&_scheduler.job_queue, &getJobID);
+  // print_queue(&_scheduler.active_queue, &getActiveID);
+  // print_queue(&_scheduler.job_queue, &getJobID);
   
 }
 char* getJobID(const void * job) {
