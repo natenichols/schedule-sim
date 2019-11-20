@@ -449,8 +449,8 @@ void scheduler_clean_up()
  */
 void scheduler_show_queue()
 {
-  // print_queue(&_scheduler.active_queue, &getActiveID);
-  // print_queue(&_scheduler.job_queue, &getJobID);
+  print_queue(&_scheduler.active_queue, &getActiveID);
+  print_queue(&_scheduler.job_queue, &getJobID);
   
 }
 char* getJobID(const void * job) {
